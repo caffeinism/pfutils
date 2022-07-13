@@ -7,6 +7,10 @@ import multiprocessing
 from pathlib import Path
 from pfutils.commands import cli
 
+def copy(path):
+    src, dst = path
+    shutil.copy(src, dst)
+
 @cli.command(help='copy files and directories')
 @click.option('-r', '--recursive', is_flag=True, help='copy directories recursively')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
@@ -40,7 +44,9 @@ def cp(src, dst, recursive, num_workers, shuffle):
             operation.append((file_, dst_file_path))
 
     if shuffle:
-        operation = random.shuffle(operation)
+        random.shuffle(operation)
 
     with multiprocessing.Pool(num_workers) as p:
         result = p.starmap(shutil.copy, tqdm.tqdm(operation))
+        for _ in tqdm.tqdm(p.imap_unordered(copy, operation), total=len(operation)):
+            pass

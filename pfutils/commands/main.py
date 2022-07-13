@@ -1,5 +1,4 @@
 import click
-from kubernetes import client, config
 
 @click.group()
 @click.pass_context

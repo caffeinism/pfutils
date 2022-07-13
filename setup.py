@@ -1,19 +1,18 @@
 from setuptools import setup, find_packages
 import os
 import platform
+from pkg_resources import parse_requirements
 
 lib_path = os.path.dirname(os.path.realpath(__file__))
 requirements_path = os.path.join(lib_path, 'requirements.txt')
 
-install_requires = [] 
-if os.path.isfile(requirements_path):
-    with open(requirements_path) as f:
-        install_requires = f.read().splitlines()
-        
+with open(requirements_path) as f:
+    install_requires = list(map(str, parse_requirements(f)))
+
 
 setup(
     name='pfutils',
-    version='0.0.1',
+    version='0.0.6',
     description='parallel file utility command line tool',
     license='MIT',
     packages=[*find_packages()],

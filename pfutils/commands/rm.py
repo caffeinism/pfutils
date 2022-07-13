@@ -23,8 +23,9 @@ def rm(file, recursive, num_workers, shuffle):
     for path in file:
         path = Path(path)
 
-        if os.path.exists(path):
+        if not os.path.exists(path):
             click.echo(f"cannot remove '{path}': No such file or directory")
+            return
 
         if os.path.isdir(path) and not recursive:
             click.echo(f"cannot remove '{path}': Is a directory")
@@ -51,10 +52,11 @@ def rm(file, recursive, num_workers, shuffle):
                 filenames.append(file_)
 
     if shuffle:
-        filenames = random.shuffle(filenames)
+        random.shuffle(filenames)
 
     with multiprocessing.Pool(num_workers) as p:
-        result = p.map(os.remove, tqdm.tqdm(filenames))
+        for _ in tqdm.tqdm(p.imap_unordered(os.remove, filenames), desc='file', total=len(filenames)):
+            pass
 
-    for directory in directories[::-1]:
+    for directory in tqdm.tqdm(directories[::-1], desc='directory'):
         os.rmdir(directory)
