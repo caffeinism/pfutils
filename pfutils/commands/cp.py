@@ -47,6 +47,5 @@ def cp(src, dst, recursive, num_workers, shuffle):
         random.shuffle(operation)
 
     with multiprocessing.Pool(num_workers) as p:
-        result = p.starmap(shutil.copy, tqdm.tqdm(operation))
         for _ in tqdm.tqdm(p.imap_unordered(copy, operation), total=len(operation)):
             pass
