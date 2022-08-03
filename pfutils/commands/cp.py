@@ -6,6 +6,8 @@ import shutil
 import random
 import multiprocessing
 from pathlib import Path
+from pfutils.utils.chunk import determine_chunk_size
+from pfutils.utils.bulk_pool import ProcessPoolExecutor
 from pfutils.commands import cli
 
 copy_func = shutil.copy2
@@ -13,13 +15,19 @@ def copy(path):
     src, dst = path
     copy_func(src, dst)
 
+def search_directory(path):
+    pass
+
+def copy_file(path):
+    pass
+
 @cli.command(help='copy files and directories')
 @click.option('-r', '--recursive', is_flag=True, help='copy directories recursively')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
-@click.option('--shuffle', is_flag=True, help='shuffle the file distribution order')
+@click.option('-c', '--chunksize', type=int, default=0, help='size of chunk')
 @click.argument('src', type=click.Path(exists=True))
 @click.argument('dst', type=click.Path())
-def cp(src, dst, recursive, num_workers, shuffle):
+def cp(src, dst, recursive, num_workers, chunksize):
     src = Path(src)
     dst = Path(dst)
 
@@ -34,32 +42,25 @@ def cp(src, dst, recursive, num_workers, shuffle):
     if os.path.islink(src):
         raise NotImplementedError
 
-    operation = []
-    for root, dirs, files in os.walk(src):
-        root = Path(root)
-        dst_path = dst / root.relative_to(src)
-        dst_path.mkdir(exist_ok=True)
-
-        for file_ in files:
-            file_ = root / file_
-            dst_file_path = dst / Path(file_).relative_to(src)
-            operation.append((file_, dst_file_path))
-
-    if shuffle:
-        random.shuffle(operation)
-
     try:
         xattr.setxattr(src, 'ceph.dir.pin', b'2')
     except os.error as e:
         pass
 
-    with multiprocessing.Pool(num_workers) as p:
-        chunksize, extra = divmod(len(operation), num_workers * 10)
-        if extra:
-            chunksize += 1
-        if len(operation) == 0:
-            chunksize = 0
+    chunksize = determine_chunk_size(num_workers) if chunksize < 1 else chunksize
 
-        for _ in tqdm.tqdm(p.imap_unordered(copy, operation, chunksize=chunksize), total=len(operation)):
-            pass
+    with ProcessPoolExecutor(max_workers=num_workers, chunksize=chunksize) as p:
+        num_total_tasks = 0
+        for root, dirs, files in os.walk(src):
+            root = Path(root)
+            dst_path = dst / root.relative_to(src)
+            dst_path.mkdir(exist_ok=True)
+
+            for file_ in files:
+                file_ = root / file_
+                dst_file_path = dst / Path(file_).relative_to(src)
+                p.submit(copy_func, file_, dst_file_path)
+                num_total_tasks += 1
         
+        for _ in tqdm.tqdm(p.flush(), total=num_total_tasks):
+            pass

@@ -6,6 +6,7 @@ import random
 import multiprocessing
 from pathlib import Path
 from pfutils.commands.main import cli
+from concurrent.futures import ProcessPoolExecutor
 
 @cli.command(help='remove files or directories')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
@@ -55,14 +56,10 @@ def rm(file, recursive, num_workers, shuffle):
     if shuffle:
         random.shuffle(filenames)
 
-    with multiprocessing.Pool(num_workers) as p:
+    with ProcessPoolExecutor(num_workers) as p:
         chunksize, extra = divmod(len(filenames), num_workers * 10)
-        if extra:
-            chunksize += 1
-        if len(filenames) == 0:
-            chunksize = 0
 
-        for _ in tqdm.tqdm(p.imap_unordered(os.remove, filenames, chunksize=chunksize), desc='file', total=len(filenames)):
+        for _ in tqdm.tqdm(p.map(os.remove, filenames, chunksize=chunksize), desc='file', total=len(filenames)):
             pass
 
     for directory in tqdm.tqdm(directories[::-1], desc='directory'):
