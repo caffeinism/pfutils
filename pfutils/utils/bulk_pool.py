@@ -18,6 +18,15 @@ def _chain_from_iterable_of_lists(iterable):
 def _process_chunk(chunk):
     return [fn(*args, **kwargs) for fn, args, kwargs in chunk]
 
+def _chain_from_generator(generator):
+    flag = True
+    while flag:
+        iterable = generator()
+        flag = False
+        for it in iterable:
+            flag = True
+            yield it
+
 class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
     def __init__(self, *args, chunksize, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,6 +60,10 @@ class ProcessPoolExecutor(concurrent.futures.ProcessPoolExecutor):
                     future.cancel()
 
         return _chain_from_iterable_of_lists(result_iterator())
+
+    def flush_until_end(self):
+        return _chain_from_generator(self.flush)
+
 
     def __exit__(self, *args, **kwargs):
         if self._chunk:

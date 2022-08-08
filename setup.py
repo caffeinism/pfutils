@@ -12,7 +12,7 @@ with open(requirements_path) as f:
 
 setup(
     name='pfutils',
-    version='0.0.22',
+    version='0.0.24',
     description='parallel file utility command line tool',
     license='MIT',
     packages=[*find_packages()],
