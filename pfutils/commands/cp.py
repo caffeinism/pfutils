@@ -16,11 +16,16 @@ copy_func = shutil.copy2
 @click.option('-r', '--recursive', is_flag=True, help='copy directories recursively')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
 @click.option('-c', '--chunksize', type=int, default=0, help='size of chunk')
+@click.option('-L', '--dereference', is_flag=True, help='always follow symbolic links in SRC')
 @click.argument('src', type=click.Path(exists=True))
 @click.argument('dst', type=click.Path())
-def cp(src, dst, recursive, num_workers, chunksize):
+def cp(src, dst, recursive, num_workers, chunksize, dereference):
     src = Path(src)
     dst = Path(dst)
+
+    if os.path.islink(src):
+        os.symlink(os.readlink(src), dst)
+        return
 
     if os.path.isfile(src):
         copy_func(src, dst)
@@ -30,17 +35,16 @@ def cp(src, dst, recursive, num_workers, chunksize):
         click.echo(f"-r not specified; omitting directory '{src}'")
         return
 
-    if os.path.islink(src):
-        raise NotImplementedError
-
     chunksize = determine_chunk_size(num_workers) if chunksize < 1 else chunksize
 
+    directories = []
     with ProcessPoolExecutor(max_workers=num_workers, chunksize=chunksize) as p:
         num_total_tasks = 0
-        for root, dirs, files in os.walk(src):
+        for root, dirs, files in os.walk(src, followlinks=dereference):
             root = Path(root)
             dst_path = dst / root.relative_to(src)
             dst_path.mkdir(exist_ok=True)
+            directories.append((root, dst_path))
 
             for file_ in files:
                 file_ = root / file_
@@ -50,3 +54,6 @@ def cp(src, dst, recursive, num_workers, chunksize):
         
         for _ in tqdm.tqdm(p.flush(), total=num_total_tasks):
             pass
+
+    for src_directory, dst_directory in directories:
+        shutil.copystat(src_directory, dst_directory)
