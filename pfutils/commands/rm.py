@@ -6,14 +6,15 @@ import random
 import multiprocessing
 from pathlib import Path
 from pfutils.commands.main import cli
-from concurrent.futures import ProcessPoolExecutor
+from pfutils.utils.chunk import determine_chunk_size
+from pfutils.utils.bulk_pool import ProcessPoolExecutor
 
 @cli.command(help='remove files or directories')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
-@click.option('--shuffle', is_flag=True, help='shuffle the file distribution order')
 @click.option('-r', '--recursive', is_flag=True, help='remove directories and their contents recursively')
+@click.option('-c', '--chunksize', type=int, default=0, help='size of chunk')
 @click.argument('file', nargs=-1)
-def rm(file, recursive, num_workers, shuffle):
+def rm(file, recursive, num_workers, chunksize):
     if not click.confirm('you really meant it?', default=False):
         click.echo('cancel deletation')
         return
@@ -36,30 +37,28 @@ def rm(file, recursive, num_workers, shuffle):
         if os.path.islink(path):
             raise NotImplementedError
 
+    chunksize = determine_chunk_size(num_workers) if chunksize < 1 else chunksize
+
     directories = []
-    filenames = []
-    for path in file:
-        path = Path(path)
+    with ProcessPoolExecutor(max_workers=num_workers, chunksize=chunksize) as p:
+        num_total_tasks = 0
+        for path in file:
+            path = Path(path)
 
-        if os.path.isfile(path):
-            filenames.append(path)
-            return
+            if os.path.isfile(path):
+                filenames.append(path)
+                return
 
-        for root, dirs, files in os.walk(path):
-            root = Path(root)
-            directories.append(root)
+            for root, dirs, files in os.walk(path):
+                root = Path(root)
+                directories.append(root)
 
-            for file_ in files:
-                file_ = root / file_
-                filenames.append(file_)
+                for file_ in files:
+                    file_ = root / file_
+                    p.submit(os.remove, file_)
+                    num_total_tasks += 1
 
-    if shuffle:
-        random.shuffle(filenames)
-
-    with ProcessPoolExecutor(num_workers) as p:
-        chunksize, extra = divmod(len(filenames), num_workers * 10)
-
-        for _ in tqdm.tqdm(p.map(os.remove, filenames, chunksize=chunksize), desc='file', total=len(filenames)):
+        for _ in tqdm.tqdm(p.flush(), desc='file', total=num_total_tasks):
             pass
 
     for directory in tqdm.tqdm(directories[::-1], desc='directory'):

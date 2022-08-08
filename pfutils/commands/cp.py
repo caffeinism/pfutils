@@ -11,15 +11,6 @@ from pfutils.utils.bulk_pool import ProcessPoolExecutor
 from pfutils.commands import cli
 
 copy_func = shutil.copy2
-def copy(path):
-    src, dst = path
-    copy_func(src, dst)
-
-def search_directory(path):
-    pass
-
-def copy_file(path):
-    pass
 
 @cli.command(help='copy files and directories')
 @click.option('-r', '--recursive', is_flag=True, help='copy directories recursively')
@@ -41,11 +32,6 @@ def cp(src, dst, recursive, num_workers, chunksize):
 
     if os.path.islink(src):
         raise NotImplementedError
-
-    try:
-        xattr.setxattr(src, 'ceph.dir.pin', b'2')
-    except os.error as e:
-        pass
 
     chunksize = determine_chunk_size(num_workers) if chunksize < 1 else chunksize
 
