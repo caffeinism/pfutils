@@ -147,8 +147,7 @@ sys     2m6.009s
 ### NAS to DAS
 
 ```
-time cp /mnt/cephfs/imagenet-2012/ /mnt/nvme/imagenet-2012-copy -r
-
+$ time cp /mnt/cephfs/imagenet-2012/ /mnt/nvme/imagenet-2012-copy -r
 
 real    12m52.895s
 user    0m3.024s
@@ -161,6 +160,38 @@ sys     2m58.706s
 
 ### DAS to NAS
 
+```
+$ time pfutils cp -r -j20 -c20000 /mnt/nvme/imagenet-2012 /mnt/cephfs/imagenet-2012/
+100%|████████████████████████████| 1331167/1331167 [01:24<00:00, 15689.53it/s]
+
+real    2m22.602s
+user    2m20.497s
+sys     5m11.242s
+
+# approximately 1046 MiB/s
+```
+
 ### NAS to NAS (same filesystem)
 
+```
+$ time pfutils cp -r -j20 -c20000 /mnt/cephfs/imagenet-2012/ /mnt/cephfs/imagenet-2012-copy/
+68%|█████████████████████████████| 900000/1331167 [06:27<03:05, 2323.62it/s]
+real    7m23.195s
+user    2m27.837s
+sys     4m37.514s
+
+# It stops at the same point as normal cp, but a simple comparison will be possible.
+```
+
 ### NAS to DAS
+
+```
+$ time pfutils cp -r -j20 -c20000 /mnt/cephfs/imagenet-2012/ /mnt/nvme/imagenet-2012-copy/
+100%||████████████████████████████| 1331167/1331167 [08:32<00:00, 2596.60it/s]
+
+real    9m18.036s
+user    2m28.436s
+sys     4m43.750s
+
+# approximately 267 MiB/s
+```
