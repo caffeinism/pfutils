@@ -88,7 +88,7 @@ OSD is used to write blocks in cephfs and MDS is used to perform file system rel
 
 ## Experiment
 
-Writing a large amount to a single file does not reveal the metadata overhead, which is a problem when using a network-based file system when only block IO is used. I will use as an example the copy and delete of imagenet, which may appear in general. In the experiment, I dropped the page cache before executing the instruction.
+Writing a large amount to a single file does not reveal the metadata overhead, which is a problem when using a network-based file system when only block IO is used. I will use as an example the copy and delete of imagenet, which may appear in general. In the experiment, I dropped the page cache before executing the instruction. Micron 7300 Pro 1.92TB as DAS and cephfs with 3 ramdisk nodes as NAS.
 
 ## cp
 
