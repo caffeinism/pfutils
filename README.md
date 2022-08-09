@@ -1,7 +1,5 @@
 # pfutils
 
-This program is a basic sketching step. (I'm benchmarking performance with basic code)
----
 Basically, concurrency is not important when using Direct-attached storage(DAS). Reading blocks is a major bottleneck for DAS because metadata is very small and can be read immediately.
 
 But what about network-attached storage (NAS)? To read metadata from a file system that satisfies concurrency, communication with the metadata server(MDS) is required. The MDS may need to be read by communicating with another NAS. In that case, a round trip time of several milliseconds may occur. This is part of an unnecessary bottleneck, as it introduces another overhead that DAS does not have.
@@ -175,7 +173,7 @@ sys     5m11.242s
 
 ```
 $ time pfutils cp -r -j20 -c20000 /mnt/cephfs/imagenet-2012/ /mnt/cephfs/imagenet-2012-copy/
-68%|█████████████████████████████| 900000/1331167 [06:27<03:05, 2323.62it/s]
+68%|██████████████████████       | 900000/1331167 [06:27<03:05, 2323.62it/s]
 real    7m23.195s
 user    2m27.837s
 sys     4m37.514s
@@ -194,4 +192,40 @@ user    2m28.436s
 sys     4m43.750s
 
 # approximately 267 MiB/s
+```
+
+## rm
+
+### DAS
+
+```
+$ time rm /mnt/nvme/imagenet-2012-copy/ -r
+
+real    0m48.581s
+user    0m0.439s
+sys     0m13.494s
+```
+
+### NAS
+
+```
+$ time rm /mnt/cephfs/imagenet-2012/ -r
+
+real    4m9.142s
+user    0m0.689s
+sys     0m10.066s
+```
+
+## pfutils rm -j20 -c20000 -r
+
+### NAS
+
+```
+$ time pfutils rm -j20 -c20000 -r -y /mnt/cephfs/imagenet-2012/
+file: 100%|██████████████████████| 1331167/1331167 [00:16<00:00, 78883.35it/s]
+directory: 100%|█████████████████████████| 2003/2003 [00:03<00:00, 641.30it/s]
+
+real    1m37.219s
+user    0m31.170s
+sys     0m21.037s
 ```
