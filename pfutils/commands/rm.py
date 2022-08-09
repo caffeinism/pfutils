@@ -13,9 +13,10 @@ from pfutils.utils.bulk_pool import ProcessPoolExecutor
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
 @click.option('-r', '--recursive', is_flag=True, help='remove directories and their contents recursively')
 @click.option('-c', '--chunksize', type=int, default=0, help='size of chunk')
+@click.option('-y', '--yes', is_flag=True, help='yes I really meant it')
 @click.argument('file', nargs=-1)
-def rm(file, recursive, num_workers, chunksize):
-    if not click.confirm('you really meant it?', default=False):
+def rm(file, recursive, num_workers, chunksize, yes):
+    if not yes and not click.confirm('you really meant it?', default=False):
         click.echo('cancel deletation')
         return
 
