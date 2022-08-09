@@ -25,13 +25,15 @@ $ python3 -m pip install pfutils
 Following the flow of the Python package installer, the pftuils command can be used as follows:
 
 ```
-# If you have sudo privileges, the command will be installed in /usr/local/bin and so on, and you can run it right away.
+# If you have sudo privileges, the command will be installed in /usr/local/bin and
+# so on, and you can run it right away.
 $ pfutils --help
 
-# If you don't have sudo privileges, the commands will be installed in ~/.local/bin etc. and you need to add this path to $PATH so
-# that it can be executed without path.
+# If you don't have sudo privileges, the commands will be installed in ~/.local/bin 
+# and you need to add this path to $PATH so that it can be executed without path.
 
-# Regardless of the environment variable, if python3 is in the path, it can be executed as follows.
+# Regardless of the environment variable, if python3 is in the path, it can be 
+# executed as follows.
 $ python3 -m pfutils --help
 ```
 
@@ -88,25 +90,74 @@ OSD is used to write blocks in cephfs and MDS is used to perform file system rel
 
 ## Experiment
 
-Writing a large amount to a single file does not reveal the metadata overhead, which is a problem when using a network-based file system when only block IO is used. I will use as an example the copy and delete of imagenet, which may appear in general.
+Writing a large amount to a single file does not reveal the metadata overhead, which is a problem when using a network-based file system when only block IO is used. I will use as an example the copy and delete of imagenet, which may appear in general. In the experiment, I dropped the page cache before executing the instruction.
 
 ## cp
 
 ### DAS to DAS (different filesystems)
 
+```
+$ time cp  /host/imagenet-2012 /mnt/nvme/imagenet-2012 -r
+real    7m50.016s
+user    0m2.656s
+sys     3m3.991s
+
+# approximately 317.3 MiB/s
+```
+
 ### DAS to DAS (same filesystem)
+
+```
+$ time cp /mnt/nvme/imagenet-2012/ /mnt/nvme/imagenet-2012-copy -r
+
+real    6m29.872s
+user    0m2.746s
+sys     2m47.706s
+
+# approximately 382.5 MiB/s
+```
 
 ### DAS to NAS
 
+```
+$ time cp /mnt/nvme/imagenet-2012/ /mnt/cephfs/imagenet-2012 -r
+
+real    9m47.546s
+user    0m2.619s
+sys     2m19.726s
+
+# approximately 253.8 MiB/s
+```
+
 ### NAS to NAS (same filesystem)
+
+```
+$ time cp /mnt/cephfs/imagenet-2012 /mnt/cephfs/imagenet-2012-copy -r
+
+real    17m20.175s
+user    0m3.249s
+sys     2m6.009s
+
+# Haha.. I couldn't finish it to the end due to the RAM limit of my computers
+# (I guess about 30 GiB of uncopied data is left) But you can see it's very
+# slow. Since writes are written to the page cache and writebacks but not 
+# reads, sequentially reading from the NAS has a large overhead.
+```
 
 ### NAS to DAS
 
+```
+time cp /mnt/cephfs/imagenet-2012/ /mnt/nvme/imagenet-2012-copy -r
+
+
+real    12m52.895s
+user    0m3.024s
+sys     2m58.706s
+
+# approximately 192.9 MiB/s
+```
+
 ## pfutils cp -j20 -c20000 -r
-
-### DAS to DAS (different filesystems)
-
-### DAS to DAS (same filesystem)
 
 ### DAS to NAS
 
