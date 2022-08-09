@@ -71,4 +71,45 @@ When implemented as a thread in C++ and bound to Python, there was a performance
 
 # Performance Benchmark under cephfs
 
-TBA
+## Cluster configuration
+
+```mermaid
+  graph TD;
+      Client-->OSD_0;
+      Client-->OSD_1;
+      Client-->OSD_2;
+      Client-->MDS;
+      MDS-->OSD_0;
+      MDS-->OSD_1;
+      MDS-->OSD_2;
+```
+
+OSD is used to write blocks in cephfs and MDS is used to perform file system related operations. MDS also writes data into the OSD to safely manage the metadata it uses. I connected Client, OSD, and MDS through L2 switch of 10Gbps, and 3 OSD nodes were configured using ramdisk to sufficiently satisfy 10Gbps switch. No replication is configured.
+
+## Experiment
+
+Writing a large amount to a single file does not reveal the metadata overhead, which is a problem when using a network-based file system when only block IO is used. I will use as an example the copy and delete of imagenet, which may appear in general.
+
+## cp
+
+### DAS to DAS (different filesystems)
+
+### DAS to DAS (same filesystem)
+
+### DAS to NAS
+
+### NAS to NAS (same filesystem)
+
+### NAS to DAS
+
+## pfutils cp -j20 -c20000 -r
+
+### DAS to DAS (different filesystems)
+
+### DAS to DAS (same filesystem)
+
+### DAS to NAS
+
+### NAS to NAS (same filesystem)
+
+### NAS to DAS
