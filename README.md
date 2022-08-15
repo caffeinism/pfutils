@@ -17,6 +17,8 @@ Depending on how python is installed, the command may be slightly different. You
 $ pip3 install pfutils
 # If pip is unnamed but there is pip module in "python3"
 $ python3 -m pip install pfutils
+# You can force the implementation of python if you wish
+$ pip3 install pfutils --no-binary=pfutils
 # If it is named without "3", remove "3" as appropriate...
 ```
 
@@ -67,7 +69,7 @@ In case of using the map method, since the block operation starts after reading 
 
 I can give concurrency to reading metadata as well, but there doesn't seem to be a need for that operation to improve performance. However, its implementation may change in the future to work with more metadata.
 
-When implemented as a thread in C++ and bound to Python, there was a performance improvement under a small cpu resource due to the difference in overhead between process and thread. However, my C++ implementation is not smooth, so I plan to implement the same behavior in C++ after completing the python implementation.
+When implemented as a thread in C++ and bound to Python, there was a performance improvement under a small cpu resource due to the difference in overhead between process and thread. I used [https://github.com/bshoshany/thread-pool](https://github.com/bshoshany/thread-pool) for my module's C++ thread pool implementation. The detailed operation (count of progressbar, output of exception handle, etc.) does not completely match the implementation of python and c++, but the basic operation is designed so that there is no problem with each other. Users can force the installation of python by not using the wheel. (Refer to the installation above)
 
 # Performance Benchmark under cephfs
 
