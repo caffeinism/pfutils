@@ -8,14 +8,15 @@ from pathlib import Path
 from pfutils.commands.main import cli
 from pfutils.utils.chunk import determine_chunk_size
 from pfutils.utils.bulk_pool import ProcessPoolExecutor
+from pfutils.utils.file_manager import FileManager
 
 @cli.command(help='remove files or directories')
 @click.option('-j', '--num-workers', type=int, default=1, help='number of concurrent workers')
 @click.option('-r', '--recursive', is_flag=True, help='remove directories and their contents recursively')
-@click.option('-c', '--chunksize', type=int, default=0, help='size of chunk')
+@click.option('-c', '--chunk-size', type=int, default=0, help='size of chunk')
 @click.option('-y', '--yes', is_flag=True, help='yes I really meant it')
 @click.argument('file', nargs=-1)
-def rm(file, recursive, num_workers, chunksize, yes):
+def rm(file, recursive, num_workers, chunk_size, yes):
     if not yes and not click.confirm('you really meant it?', default=False):
         click.echo('cancel deletation')
         return
@@ -38,11 +39,10 @@ def rm(file, recursive, num_workers, chunksize, yes):
         if os.path.islink(path):
             raise NotImplementedError
 
-    chunksize = determine_chunk_size(num_workers) if chunksize < 1 else chunksize
+    chunk_size = determine_chunk_size(num_workers) if chunk_size < 1 else chunk_size
 
     directories = []
-    with ProcessPoolExecutor(max_workers=num_workers, chunksize=chunksize) as p:
-        num_total_tasks = 0
+    with FileManager(num_workers, chunk_size) as fm:
         for path in file:
             path = Path(path)
 
@@ -56,10 +56,9 @@ def rm(file, recursive, num_workers, chunksize, yes):
 
                 for file_ in files:
                     file_ = root / file_
-                    p.submit(os.remove, file_)
-                    num_total_tasks += 1
+                    fm.remove_file(file_)
 
-        for _ in tqdm.tqdm(p.flush(), desc='file', total=num_total_tasks):
+        for _ in tqdm.tqdm(fm.flush_and_iter(), desc='file'):
             pass
 
     for directory in tqdm.tqdm(directories[::-1], desc='directory'):
