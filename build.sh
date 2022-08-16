@@ -17,4 +17,3 @@ done
 
 mv dist/*.tar.gz package
 rm dist pfutils.egg-info build -r
-chown caffeinism:caffeinism package -R
