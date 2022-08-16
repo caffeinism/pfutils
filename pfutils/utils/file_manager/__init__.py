@@ -1,6 +1,8 @@
+import logging as _logging
+
 try:
     from _pfutil import FileManager, FileSystemError
-    print('c')
+    _logging.info("use c++ thread implement")
 except ModuleNotFoundError as e:
     from pfutils.utils.file_manager.file_manager import FileManager, FileSystemError
-    print('p')
+    _logging.info("use python process implement")
