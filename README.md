@@ -156,7 +156,20 @@ sys     2m58.706s
 # approximately 192.9 MiB/s
 ```
 
-## pfutils cp -j20 -c20000 -r
+## pfutils cp -j20 -c5000 -r @ c++ thread pool
+
+### DAS to NAS
+
+```
+$ time pfutils cp -j20 -c5000 -r /raid/imagenet-2012/ /mnt/cephfs/imagenet-2012/
+100%|████████████████████████████████████| 267/267 [01:12<00:00,  3.70it/s]
+
+real    1m54.897s
+user    0m29.947s
+sys     3m14.417s
+```
+
+## pfutils cp -j20 -c20000 -r @ python process pool
 
 ### DAS to NAS
 
@@ -218,7 +231,21 @@ user    0m0.689s
 sys     0m10.066s
 ```
 
-## pfutils rm -j20 -c20000 -r
+## pfutils rm -j20 -c5000 -r @ c++ thread pool
+
+### NAS
+
+```
+$ time pfutils rm -j20 -c5000 -r /mnt/cephfs/imagenet-2012/ -y
+file: 100%|██████████████████████████████████| 267/267 [00:05<00:00, 48.71it/s]
+directory: 100%|████████████████████████| 2003/2003 [00:00<00:00, 2273.27it/s]
+
+real    1m37.519s
+user    0m9.854s
+sys     0m16.984s
+```
+
+## pfutils rm -j20 -c20000 -r @ python process pool
 
 ### NAS
 
