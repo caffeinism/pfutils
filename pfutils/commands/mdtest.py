@@ -1,6 +1,7 @@
 import os
 import tqdm
 import click
+import random
 from pathlib import Path
 from pfutils.commands import cli
 from pfutils.utils.chunk import determine_chunk_size
@@ -39,7 +40,8 @@ def mdtest(target, num_workers, chunk_size, num_directories, num_total_files, fi
             for j in range(num_files):
                 file_path = directory_path / f'{j:08d}'
 
-                fm.write_file(file_path, file_size, False)
+                jitter = random.randint(-file_size // 2, file_size // 2)
+                fm.write_file(file_path, file_size + jitter, False)
 
         try:
             for _ in tqdm.tqdm(fm.flush_and_iter()):
