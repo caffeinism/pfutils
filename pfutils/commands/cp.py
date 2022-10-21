@@ -1,14 +1,10 @@
 import os
 import tqdm
 import click
-import xattr
 import shutil
-import random
-import multiprocessing
 from pathlib import Path
-from pfutils.utils.chunk import determine_chunk_size
-from pfutils.utils.bulk_pool import ProcessPoolExecutor
 from pfutils.commands import cli
+from pfutils.utils.chunk import determine_chunk_size
 from pfutils.utils.file_manager import FileManager, FileSystemError
 
 copy_func = shutil.copy2

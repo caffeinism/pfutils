@@ -10,6 +10,10 @@ def copy_func(src, dst):
     except FileNotFoundError as e:
         raise FileSystemError(f'cannot copy file [{e.filename}]')
 
+def write_func(path, file_size, randomness):
+    with open(path, 'wb') as f:
+        f.write(b'0123456789abcdef' * 64 * file_size)
+    
 class FileManager:
     def __init__(self, num_workers, chunk_size):
         self.pool = ProcessPoolExecutor(num_workers, chunksize=chunk_size)
@@ -20,6 +24,9 @@ class FileManager:
     
     def remove_file(self, path):
         self.pool.submit(os.remove, path)
+
+    def write_file(self, path, file_size, randomness):
+        self.pool.submit(write_func, path, file_size, randomness)
 
     def flush_and_iter(self):
         return self.pool.flush()

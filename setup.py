@@ -25,7 +25,7 @@ if flag_build_cpp == "true":
 
 setup(
     name='pfutils',
-    version='0.0.27',
+    version='0.0.31',
     description='parallel file utility command line tool',
     license='MIT',
     packages=[*find_packages()],

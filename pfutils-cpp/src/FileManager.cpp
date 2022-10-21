@@ -1,5 +1,6 @@
 #include "FileManager.h"
 #include <utility>
+#include <fstream>
 
 FileManager::FileManager(
     uint32_t num_threads, 
@@ -24,6 +25,23 @@ void FileManager::remove_file(
     this->bulk_pool.push(
         [path]()->void{
             std::filesystem::remove(path);
+        }
+    );
+}
+
+void FileManager::write_file(
+    std::filesystem::path &path,
+    uint32_t file_size,
+    bool randomness
+) {
+    this->bulk_pool.push(
+        [path, file_size]()->void{
+            char *byte_array = "0123456789abcdef";
+            std::ofstream file(path, std::ios::binary | std::ios::out);
+
+            for(uint32_t i=0; i<64 * file_size; ++i) {
+                file.write(byte_array, 16);
+            }
         }
     );
 }

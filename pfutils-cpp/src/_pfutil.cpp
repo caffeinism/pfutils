@@ -20,6 +20,7 @@ PYBIND11_MODULE(_pfutil, m) {
         .def(py::init<uint32_t, uint32_t>())
         .def("copy_file", &FileManager::copy_file)
         .def("remove_file", &FileManager::remove_file)
+        .def("write_file", &FileManager::write_file)
         .def("flush_and_iter", &FileManager::flush_and_iter)
         .def("__enter__", [](FileManager &self)->FileManager&{ return self; })
         .def("__exit__", [](FileManager &self, const py::object &type, const py::object &value, const py::object &traceback){})
